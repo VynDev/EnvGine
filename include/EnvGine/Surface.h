@@ -9,18 +9,16 @@ class Surface {
 
     public:
 
-    Surface(Engine *engine) : engine(engine) {
-        
-    };
+    Surface(Engine *engine) : engine(engine) {};
 
     void FullScreen();
 
-    void SetPosition(int x, int y);
     void SetX(int x);
     void SetY(int y);
-    const Position &GetPosition() const;
     int GetX() const;
     int GetY() const;
+    void SetPosition(int x, int y);
+    const Position &GetPosition() const;
 
     void SetWidth(int width);
     void SetHeight(int height);

@@ -5,8 +5,9 @@ solution "EnvGine"
 		kind "StaticLib"
 		language "C++"
 		cppdialect "C++17"
-		files {"src/**.h", "src/**.cpp"}
-		removefiles {"src/**.test.cpp"}
+		includedirs {"include/EnvGine"}
+		files {"include/**.h", "source/**.cpp"}
+		removefiles {"source/**.test.cpp"}
 		targetdir "lib"
 
 	configuration "Debug"

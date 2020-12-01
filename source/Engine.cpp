@@ -11,33 +11,27 @@ using namespace std::chrono;
 
 Engine* Engine::Init(int width, int height) {
     std::cout << "Thread count :" << std::thread::hardware_concurrency() << std::endl;
-    Engine *engine = new Engine;
     sf::RenderWindow *window = new sf::RenderWindow(sf::VideoMode(width, height), "Snake");
-
-    engine->SetWindow(window);
-
+    Engine *engine = new Engine(window);
     return engine;
 }
 
-void ThreadLoop(Engine *engine, int threadIndex) {
+void Engine::ThreadLoop(int threadIndex) {
     std::cout << "Thread started (" << threadIndex << ")" << std::endl;
-    while (true) {
-        engine->Tick(threadIndex);
-    }
+    while (true)
+        Tick(threadIndex);
     std::cout << "Thread Ended (" << threadIndex << ")" << std::endl;
 }
 
 void Engine::AddThread() {
     ++threadCount;
-    std::thread *thread = new std::thread(ThreadLoop, this, threadCount);
+    std::thread *thread = new std::thread(&Engine::ThreadLoop, this, threadCount);
 }
 
 int Engine::Execute(Environment *environment) {
     StartEnvironment(environment);
     AddThread();
-    while (true) {
-        RenderLoop();
-    }
+    RenderLoop();
     return 0;
 }
 
@@ -49,14 +43,13 @@ void Engine::Tick(int threadIndex) {
     lastTick = currentTick;
 
     environmentsMutex.lock();
-    for (int i = 0; i < environments.size(); ++i) {
-        if (!environments[i]->IsRunning())
+
+    for (auto *environment : environments) {
+        if (!environment->IsRunning())
             continue;
-        environments[i]->Tick(delta);
-        
-        std::vector<Entity*> &entities = environments[i]->GetEntities();
-        for (int j = 0; j < entities.size(); ++j) {
-            entities[j]->Tick(delta);
+        environment->Tick(delta);
+        for (auto *entity : environment->GetEntities()) {
+            entity->Tick(delta);
         }
     }
     environmentsMutex.unlock();
@@ -71,58 +64,36 @@ bool Engine::IsKeyPressed(int keyCode) {
         return true;
     else if (keyCode == sf::Keyboard::Key::D && keys[3])
         return true;
-
     return false;
 }
 
 void Engine::RenderLoop() {
-    
-    sf::Event event;
-    while (window->pollEvent(event)) {
-        if (event.type == sf::Event::Closed) {
-            for (int i = 0; i < environments.size(); ++i) {
-                environments[i]->SetRunning(false);
-                quit = true;
+    bool bShouldContinue = true;
+    while (bShouldContinue) {
+        sf::Event event;
+        while (window->pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                for (int i = 0; i < environments.size(); ++i) {
+                    environments[i]->SetRunning(false);
+                }
             }
+            keys[0] = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z);
+            keys[1] = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q);
+            keys[2] = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S);
+            keys[3] = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D);
         }
+        ProcessMouse();
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z))
-            keys[0] = true;
-        else
-            keys[0] = false;
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q))
-            keys[1] = true;
-        else
-            keys[1] = false;
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
-            keys[2] = true;
-        else
-            keys[2] = false;
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
-            keys[3] = true;
-        else
-            keys[3] = false;            
-
+        window->clear(sf::Color::Black);
+        bShouldContinue = false;
+        for (auto *environment : environments) {
+            if (!environment->IsRunning() || !environment->IsRenderingEnabled())
+                continue;
+            bShouldContinue = true;
+            environment->Render(1/*delta*/);
+        }
+        window->display();
     }
-    ProcessInputs();
-
-    window->clear(sf::Color::Black);
-    
-    for (int i = 0; i < environments.size(); ++i) {
-        if (!environments[i]->IsRunning() || !environments[i]->IsRenderingEnabled())
-            continue;
-        Environment *environment = environments[i];
-        environment->Render(/*delta*/1);
-    }
-
-    window->display();
-}
-
-void Engine::ProcessInputs() {
-    ProcessMouse();
 }
 
 void Engine::ProcessMouse() {
@@ -141,28 +112,24 @@ void Engine::ProcessMouse() {
     }
 
     leftButtonAlreadyPressed = true;
-    
-    for (int i = 0; i < environments.size(); ++i) {
-        if (!environments[i]->IsRunning())
+
+    for (auto *environment : environments) {
+        if (!environment->IsRunning())
             continue;
-        std::vector<Entity*> &entities = environments[i]->GetEntities();
-        for (int j = 0; j < entities.size(); ++j) {
-            if (mouseX >= entities[j]->GetPosition().x
-            && mouseX <= entities[j]->GetPosition().x + entities[j]->GetWidth()
-            && mouseY >= entities[j]->GetPosition().y
-            && mouseY <= entities[j]->GetPosition().y + entities[j]->GetHeight())
+        std::vector<Entity*> &entities = environment->GetEntities();
+
+        for (auto *entity : environment->GetEntities()) {
+            if (mouseX >= entity->GetPosition().x
+            && mouseX <= entity->GetPosition().x + entity->GetWidth()
+            && mouseY >= entity->GetPosition().y
+            && mouseY <= entity->GetPosition().y + entity->GetHeight())
             {
-                if (entities[j]->IsClickable())
-                    entities[j]->OnClick();
+                if (entity->IsClickable())
+                    entity->OnClick();
                 return ;
             }
         }
     }
-   
-}
-
-void Engine::SetWindow(sf::RenderWindow *window) {
-    this->window = window;
 }
 
 sf::RenderWindow &Engine::GetWindow() {
