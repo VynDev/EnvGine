@@ -16,6 +16,10 @@ Engine* Engine::Init(int width, int height) {
     return engine;
 }
 
+Engine::Engine(sf::RenderWindow *window) : window(window) {
+    SelectMonitor<Monitor>();
+}
+
 void Engine::ThreadLoop(int threadIndex) {
     std::cout << "Thread started (" << threadIndex << ")" << std::endl;
     while (true)
@@ -43,16 +47,16 @@ void Engine::Tick(int threadIndex) {
     lastTick = currentTick;
 
     environmentsMutex.lock();
-
     for (auto *environment : environments) {
         if (!environment->IsRunning())
             continue;
-        environment->Tick(delta);
         for (auto *entity : environment->GetEntities()) {
             entity->Tick(delta);
         }
+        environment->Tick(delta);
     }
     environmentsMutex.unlock();
+    monitor->Tick(delta);
 }
 
 bool Engine::IsKeyPressed(int keyCode) {
@@ -73,9 +77,10 @@ void Engine::RenderLoop() {
         sf::Event event;
         while (window->pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
-                for (int i = 0; i < environments.size(); ++i) {
+                exit(1);
+                /*for (int i = 0; i < environments.size(); ++i) {
                     environments[i]->SetRunning(false);
-                }
+                }*/
             }
             keys[0] = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z);
             keys[1] = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q);
@@ -85,11 +90,11 @@ void Engine::RenderLoop() {
         ProcessMouse();
 
         window->clear(sf::Color::Black);
-        bShouldContinue = false;
+        //bShouldContinue = false;
         for (auto *environment : environments) {
             if (!environment->IsRunning() || !environment->IsRenderingEnabled())
                 continue;
-            bShouldContinue = true;
+            //bShouldContinue = true;
             environment->Render(1/*delta*/);
         }
         window->display();
@@ -117,15 +122,18 @@ void Engine::ProcessMouse() {
         if (!environment->IsRunning())
             continue;
         std::vector<Entity*> &entities = environment->GetEntities();
-
+        
         for (auto *entity : environment->GetEntities()) {
-            if (mouseX >= entity->GetPosition().x
-            && mouseX <= entity->GetPosition().x + entity->GetWidth()
-            && mouseY >= entity->GetPosition().y
-            && mouseY <= entity->GetPosition().y + entity->GetHeight())
+            if (!entity->IsRenderable())
+                continue;
+            RenderableEntity *renderableEntity = dynamic_cast<RenderableEntity *>(entity);
+            if (mouseX >= renderableEntity->GetPosition().x
+                && mouseX <= renderableEntity->GetPosition().x + renderableEntity->GetWidth()
+                && mouseY >= renderableEntity->GetPosition().y
+                && mouseY <= renderableEntity->GetPosition().y + renderableEntity->GetHeight())
             {
-                if (entity->IsClickable())
-                    entity->OnClick();
+                if (renderableEntity->IsClickable())
+                    renderableEntity->OnClick();
                 return ;
             }
         }

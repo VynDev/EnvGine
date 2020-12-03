@@ -1,7 +1,7 @@
 #include "Text.h"
 #include "Surface.h"
 
-Text::Text(Environment *environment) : Entity(environment) {
+Text::Text(Environment *environment) : RenderableEntity(environment) {
 
     if (!font.loadFromFile("Resources/arial.ttf"))
     {
@@ -14,11 +14,6 @@ Text::Text(Environment *environment) : Entity(environment) {
     text.setCharacterSize(64);
     text.setFillColor(sf::Color::Red);
     text.setPosition(400, 400);
-
-    SetPosition(text.getGlobalBounds().left, text.getGlobalBounds().top);
-    SetWidth(text.getGlobalBounds().width);
-    SetHeight(text.getGlobalBounds().height);
-    SetClickable(true);
 }
 
 void Text::Render(Surface &surface) {
@@ -33,18 +28,17 @@ void Text::OnClick() {
 
 void Text::SetOnClickFunction(std::function<void()> f) {
     this->onClickFunction = f;
+    SetClickable(true);
 }
 
 void Text::SetText(std::string value) {
     text.setString(value);
 }
 
-void Text::SetPosition(int x, int y) {
-    position.x = x;
-    position.y = y;
-    text.setPosition(x, y);
+void Text::CenterHorizontaly() {
+    SetPosition(GetEnvironment().GetSurface().GetWidth() / 2 - GetWidth() / 2, GetY());
 }
 
-const Position &Text::GetPosition() const {
-    return position;
+void Text::CenterVerticaly() {
+    SetPosition(GetX(), GetEnvironment().GetSurface().GetHeight() / 2 - GetHeight() / 2);
 }

@@ -8,3 +8,9 @@ T* Engine::CreateEnvironment() {
     environmentsMutex.unlock();
     return environment;
 }
+
+template<class T>
+Monitor *Engine::SelectMonitor() {
+    monitor = std::make_unique<T>(this);
+    return monitor.get();
+}

@@ -12,7 +12,7 @@ void Surface::Draw(Texture *texture, int x, int y, int width, int height) {
 }
 
 void Surface::Draw(sf::Text *drawable, int x, int y) {
-    drawable->setPosition(GetX() + x,GetY() + y);
+    drawable->setPosition(GetX() + x, GetY() + y);
     engine->GetWindow().draw(*drawable);
 }
 

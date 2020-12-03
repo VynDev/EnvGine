@@ -5,28 +5,26 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "Entity.h"
+#include "RenderableEntity.h"
 #include "Engine.h"
 
-class Text : public Entity {
+class Text : public RenderableEntity {
 
     public:
 
     Text(Environment *environment);
 
-    virtual void Render(Surface &surface);
+    virtual void Render(Surface &surface) override;
+    virtual void OnClick() override;
+    virtual int GetWidth() const override {return text.getGlobalBounds().width;}
+    virtual int GetHeight() const override {return text.getGlobalBounds().height;}
 
-    virtual void OnClick();
     void SetOnClickFunction(std::function<void()> f);
-
     void SetText(std::string value);
-
-    void SetPosition(int x, int y);
-    const Position &GetPosition() const;
-
     void SetCharacterSize(int value) {text.setCharacterSize(value);}
-    int GetWidth() const {return text.getGlobalBounds().width;}
-    int GetHeight() const {return text.getGlobalBounds().height;}
+
+    void CenterHorizontaly();
+    void CenterVerticaly();
 
     protected:
 

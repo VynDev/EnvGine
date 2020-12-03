@@ -3,6 +3,7 @@
 #include <chrono>
 #include "Base.h"
 #include "Entity.h"
+#include "RenderableEntity.h"
 #include "Utils.h"
 
 class Engine;
@@ -40,11 +41,7 @@ class Environment : public Base {
     void RemoveEntities();
 
     template<class T>
-    T* CreateEntity() {
-        T *entity = new T(this);
-        entities.push_back(entity);
-        return entity;
-    }
+    T* CreateEntity();
 
     int GetFpsCount() const {return fpsCount;}
 
@@ -57,10 +54,12 @@ class Environment : public Base {
     bool bRenderingEnabled = true;
 
     bool isRunning = false;
-    std::vector<Entity*> entities;
+    std::vector<Entity *> entities;
 
     int _fpsCount = 0;
     int fpsCount = 0;
     std::chrono::_V2::system_clock::time_point lastRenderTime;
     
 };
+
+#include "Environment.tpp"

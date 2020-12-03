@@ -2,11 +2,13 @@
 #include <vector>
 #include <chrono>
 #include <mutex>
+#include <memory>
 
 #include <SFML/Graphics.hpp>
 
 #include "Environment.h"
 #include "Exception.h"
+#include "Monitor.h"
 
 class Engine {
 
@@ -16,7 +18,7 @@ class Engine {
 
     /* Basics */
 
-    Engine(sf::RenderWindow *window) : window(window) {}
+    Engine(sf::RenderWindow *window);
 
     static Engine *Init(int width, int height);
     int Execute(Environment *environment);
@@ -41,6 +43,9 @@ class Engine {
     void RemoveEnvironment(Environment *environment);
     Environment* StartEnvironment(Environment *environment);
 
+    template<class T>
+    Monitor *SelectMonitor();
+
     private:
 
     void Tick(int threadIndex);
@@ -58,6 +63,7 @@ class Engine {
     std::mutex environmentsMutex;
     sf::RenderWindow *window = nullptr;
     std::vector<Environment*> environments;
+    std::unique_ptr<Monitor> monitor;
     std::chrono::_V2::system_clock::time_point lastTick = std::chrono::high_resolution_clock::now();
 };
 

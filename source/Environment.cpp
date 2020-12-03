@@ -34,7 +34,9 @@ void Environment::Render(float delta) {
     }
 
     for (int i = 0; i < entities.size(); ++i) {
-        entities[i]->Render(*surface);
+        if (entities[i]->IsRenderable()) {
+            dynamic_cast<RenderableEntity *>(entities[i])->Render(*surface);
+        }
     }
 }
 
